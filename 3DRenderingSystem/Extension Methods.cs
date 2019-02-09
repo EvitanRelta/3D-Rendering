@@ -8,28 +8,28 @@ namespace _3DRenderingSystem
 {
     static class Extension_Methods
     {
-        public static int Round(this double Input)
+        public static int Round(this double input)
         {
-            return Convert.ToInt32(Math.Round(Input));
+            return Convert.ToInt32(Math.Round(input));
         }
-        public static double Round(this double Input, int decimals)
+        public static double Round(this double input, int decimalPlaces)
         {
-            return Math.Round(Input, decimals);
+            return Math.Round(input, decimalPlaces);
         }
-        public static string ToString(this double Input, int decimals, bool alwaysXDecimals = false)
+        public static string ToString(this double input, int decimalPlaces, bool trailingZerosAfterDecimal = false)
         {
             char formatChar;
-            if (alwaysXDecimals)
+            if (trailingZerosAfterDecimal)
                 formatChar = '0';
             else
                 formatChar = '#';
-            string formatStr = "{0:0." + new String(formatChar, decimals) + "}";
-            return String.Format(formatStr, Input);
+            string formatStr = "{0:0." + new String(formatChar, decimalPlaces) + "}";
+            return String.Format(formatStr, input);
         }
 
 
 
-        /*=====String to vector. Cool but useless=====
+        /*String to vector. Cool but useless
         
         public static Vector ToVector(this string Input)
         {
