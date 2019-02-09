@@ -8,111 +8,106 @@ namespace _3DRenderingSystem
 {
     struct Vector
     {
-        public double X;
-        public double Y;
-        public double Z;
+        public double X {get; set;}
+        public double Y {get; set;}
+        public double Z {get; set;}
 
         public double Magnitude => Math.Sqrt(X * X + Y * Y + Z * Z);
         public Vector UnitVector => this / Magnitude;
-
-        // Constructors
+		
         public Vector(double x, double y, double z)
         {
             X = x;
             Y = y;
             Z = z;
         }
-
-        // For Convenience
-        public override string ToString()
-            { return $"<{X}, {Y}, {Z}>"; }
-        public string ToString(int decimals, bool alwaysXDecimals = false)
+		
+		public double this[int i]
         {
-            if (alwaysXDecimals)
-                return $"<{X.ToString(decimals, true)}, {Y.ToString(decimals, true)}, {Z.ToString(decimals, true)}>";
-            else
-                return $"<{X.ToString(decimals)}, {Y.ToString(decimals)}, {Z.ToString(decimals)}>";
-        }
+            get => 
+				(i == 0) ? X : 
+				(i == 1) ? Y : 
+				(i == 2) ? Z : 
+				throw new ArgumentOutOfRangeException($"Index = {i}");
             
-        public SphericalVec ToSphVec()
-        {
-            return new SphericalVec(X, Y, Z);
-        }
-            
-        // Indexer
-        public double this[int index]
-        {
-            get
-            {
-                if (index == 0) return X;
-                else if (index == 1) return Y;
-                else if (index == 2) return Z;
-                else throw new ArgumentOutOfRangeException("index");
-            }
             set
-            {
-                if (index == 0) X = value;
-                else if (index == 1) Y = value;
-                else if (index == 2) Z = value;
-                else throw new ArgumentOutOfRangeException("index");
-            }
+			{
+				if (i == 0) X = value;
+                else if (i == 1) Y = value;
+                else if (i == 2) Z = value;
+                else throw new ArgumentOutOfRangeException("i");
+			}
         }
+		
+        #region 'To' Methods
+        public override string ToString() => $"<{X}, {Y}, {Z}>";
+		
+        public string ToString(int decimalPlaces, bool trailingZerosAfterDecimal = false)
+        {
+			if (trailingZerosAfterDecimal)
+                return $"<{X.ToString(decimalPlaces, true)}, {Y.ToString(decimalPlaces, true)}, {Z.ToString(decimalPlaces, true)}>";
+            else
+                return $"<{X.ToString(decimalPlaces)}, {Y.ToString(decimalPlaces)}, {Z.ToString(decimalPlaces)}>";
+        }
+		
+        public SphericalVec ToSphVec() => new SphericalVec(X, Y, Z);
+        #endregion
 
-        // Operators
-        public static Vector operator +(Vector a, Vector b)
-            { return new Vector(a.X + b.X, a.Y + b.Y, a.Z + b.Z); }
+        #region Operators
+        public static Vector operator +(Vector a, Vector b) => new Vector(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
 
-        public static Vector operator -(Vector a, Vector b)
-            { return new Vector(a.X - b.X, a.Y - b.Y, a.Z - b.Z); }
+        public static Vector operator -(Vector a, Vector b) => new Vector(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 
-        public static Vector operator -(Vector a)           // Negative of Vector
-            { return new Vector(-a.X, -a.Y, -a.Z); }
+        public static Vector operator -(Vector a) => new Vector(-a.X, -a.Y, -a.Z);
 
-        public static Vector operator *(Vector a, double b)
-            { return new Vector(a.X * b, a.Y * b, a.Z * b); }
-        public static Vector operator *(double a, Vector b)
-            { return new Vector(b.X * a, b.Y * a, b.Z * a); }
+        public static Vector operator *(Vector a, double b) => new Vector(a.X * b, a.Y * b, a.Z * b);
+			
+        public static Vector operator *(double a, Vector b) => new Vector(b.X * a, b.Y * a, b.Z * a);
 
-        public static Vector operator /(Vector a, double b)
-            { return new Vector(a.X / b, a.Y / b, a.Z / b); }
+        public static Vector operator /(Vector a, double b) => new Vector(a.X / b, a.Y / b, a.Z / b);
 
-        public static double operator %(Vector a, Vector b)     // Dot Product
-            { return a.X * b.X + a.Y * b.Y + a.Z * b.Z; }
+        public static double operator %(Vector a, Vector b) => DotProduct(a, b);
 
-        public static Vector operator &(Vector a, Vector b)     // Cross Product
-            { return new Vector(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X); }
+        public static Vector operator &(Vector a, Vector b) => CrossProduct(a, b);
+		
+		public static double DotProduct(Vector a, Vector b) 
+			=> a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+		public static Vector CrossProduct(Vector a, Vector b) 
+			=> new Vector(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X);
+        #endregion
     }
 
 
     struct SphericalVec
     {
-        private double R;
-        private double _HoriAngRad;
-        private double _VertAngRad;
-        private bool _EvokeSinCosCalculation;
-        public double CosH;
-        public double SinH;
-        public double CosV;
-        public double SinV;
+        public double R { get; set; }
+        public double CosH { get; set; }
+        public double SinH { get; set; }
+        public double CosV { get; set; }
+        public double SinV { get; set; }
+        private double horiAngRad;
+        private double vertAngRad;
+        private bool evokeSinCosCalculation;
+		
+        #region Properties
         public bool EvokeSinCosCalculation
         {
-            get { return _EvokeSinCosCalculation; }
+            get => evokeSinCosCalculation;
             set
             {
-                if (value)
+                if (!value)
+					evokeSinCosCalculation = false;
+				else
                 {
-                    _EvokeSinCosCalculation = true;
+                    evokeSinCosCalculation = true;
                     CalculateSinCos();
                 }
-                else
-                    _EvokeSinCosCalculation = false;
             }
         }
 
-
         public double HoriAngRad            // Azimuthal Horizontal Angle in Rad
         {
-            get { return _HoriAngRad; }
+            get { return horiAngRad; }
             set
             {
                 double correctedValue = value;
@@ -120,19 +115,18 @@ namespace _3DRenderingSystem
                     correctedValue += 2 * Math.PI;
                 while (correctedValue > 2 * Math.PI)
                     correctedValue -= 2 * Math.PI;
-                _HoriAngRad = correctedValue;
+                horiAngRad = correctedValue;
 
                 CalculateSinCos();
             }
         }
-            
         public double VertAngRad            // Polar/Zenith Vertical Angle in Rad
         {
-            get { return _VertAngRad; }
+            get { return vertAngRad; }
             set                             
             {
                 if (value >= 0 && value <= Math.PI)     // Limited to [0,2Pi or 180] so that players cant look beyond 90 up and 90 down
-                    _VertAngRad = value;
+                    vertAngRad = value;
 
                 //double correctedValue = value;        // Actual calculation for spherical coord vert. angle
                 //int i = 0;
@@ -149,7 +143,7 @@ namespace _3DRenderingSystem
                 //        i++;
                 //    }
                 //}
-                //if (i % 2 == 1)     // if i is odd
+                //if (i % 2 == 1)     //  i is odd
                 //    HoriAngRad += Math.PI;
                 CalculateSinCos();
             }
@@ -157,18 +151,18 @@ namespace _3DRenderingSystem
         
         public double HoriAngDeg                // Range = [0,360]
         {
-            get { return (180 / Math.PI) * HoriAngRad; }
-            set { HoriAngRad = (Math.PI / 180) * value; }
+            get => (180 / Math.PI) * HoriAngRad;
+            set => HoriAngRad = (Math.PI / 180) * value;
         }
         public double VertAngDeg              // Range = [0,180]
         {
-            get { return (180 / Math.PI) * VertAngRad; }
-            set { VertAngRad = (Math.PI / 180) * value; }
+            get => (180 / Math.PI) * VertAngRad;
+            set => VertAngRad = (Math.PI / 180) * value;
         }
 
         public double X
         {
-            get { return - R * Math.Sin(VertAngRad) * Math.Sin(HoriAngRad); }       //*** some problems, shldnt be negative
+            get => - R * Math.Sin(VertAngRad) * Math.Sin(HoriAngRad);       //*** some problems, shldnt be negative
             set
             {
                 double NewR = Math.Sqrt(value * value + Y * Y + Z * Z);
@@ -182,7 +176,7 @@ namespace _3DRenderingSystem
         }
         public double Y
         {
-            get { return R * Math.Cos(VertAngRad); }
+            get => R * Math.Cos(VertAngRad);
             set
             {
                 double NewR = Math.Sqrt(X * X + value * value + Z * Z);
@@ -208,12 +202,13 @@ namespace _3DRenderingSystem
                 HoriAngRad = NewHoriAngRad;
             }
         }
-
-        // Constructors
+        #endregion
+		
+        #region Constructors
         public SphericalVec(double x, double y, double z, bool evokeSinCos = false) : this()
         {
             R = Math.Sqrt(x * x + y * y + z * z);
-            _EvokeSinCosCalculation = false;
+            EvokeSinCosCalculation = false;
             VertAngRad = Math.Acos(y / R);
             HoriAngRad = - Math.Atan2(x, z);
             if (evokeSinCos)
@@ -223,7 +218,7 @@ namespace _3DRenderingSystem
         public SphericalVec(double r, double horiAng, double vertAng, bool rad, bool evokeSinCos = false) : this()
         {
             R = r;
-            _EvokeSinCosCalculation = false;
+            evokeSinCosCalculation = false;
             if (rad)
             {
                 HoriAngRad = horiAng;
@@ -237,8 +232,9 @@ namespace _3DRenderingSystem
             if (evokeSinCos)
                 EvokeSinCosCalculation = true;
         }
-
-        // Methods
+        #endregion
+		
+        #region Methods
         public void CalculateSinCos()
         {
             if (EvokeSinCosCalculation)
@@ -250,11 +246,8 @@ namespace _3DRenderingSystem
                 CosV = Math.Cos((Math.PI / 2) - VertAngRad);
             }
         }
-
-        public Vector ToVector()
-            { return new Vector(X, Y, Z); }
-
-        public SphericalVec ReturnOffset(double rOffset, double horiAngOffset, double vertAngOffset, bool rad = false, bool evokeSinCos = false)   // Returns new SphericalVec with its values offset
+		
+		public SphericalVec ReturnOffset(double rOffset, double horiAngOffset, double vertAngOffset, bool rad = false, bool evokeSinCos = false)   // Returns new SphericalVec with its values offset
         {
             SphericalVec Output = new SphericalVec(R + rOffset, HoriAngRad, VertAngRad, rad:true, evokeSinCos:false);
             if (rad)
@@ -268,7 +261,7 @@ namespace _3DRenderingSystem
             {
                 if (horiAngOffset != 0)
                     Output.HoriAngDeg += horiAngOffset;
-                if (vertAngOffset != 0)
+                if(vertAngOffset != 0)
                     Output.VertAngDeg += vertAngOffset;
             }
             
@@ -276,10 +269,21 @@ namespace _3DRenderingSystem
                 Output.EvokeSinCosCalculation = true;
             return Output;
         }
+            #region 'To' Methods
+		public override string ToString() => $"R={R}, Hori. Angle={HoriAngDeg}°, Vert. Angle={VertAngDeg}°";
+		
+        public string ToString(int decimalPlaces, bool trailingZerosAfterDecimal = false)
+        {
+            if (trailingZerosAfterDecimal)
+                return $"R={R.ToString(decimalPlaces, true)}, Hori. Angle={HoriAngDeg.ToString(decimalPlaces, true)}°, Vert. Angle={VertAngDeg.ToString(decimalPlaces, true)}°";
+            else
+                return $"R={R.ToString(decimalPlaces)}, Hori. Angle={HoriAngDeg.ToString(decimalPlaces)}°, Vert. Angle={VertAngDeg.ToString(decimalPlaces)}°";
+        }
+		
+		public Vector ToVector() => new Vector(X, Y, Z);
+	        #endregion
+		
+        #endregion
     }
-
-
-
-
 
 }
